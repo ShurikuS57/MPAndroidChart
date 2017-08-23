@@ -7,7 +7,6 @@ import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.text.Layout;
@@ -15,7 +14,6 @@ import android.text.StaticLayout;
 import android.text.TextPaint;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.util.SizeF;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
@@ -552,6 +550,60 @@ public abstract class Utils {
 
     private static Rect mDrawTextRectBuffer = new Rect();
     private static Paint.FontMetrics mFontMetricsBuffer = new Paint.FontMetrics();
+
+
+    public static void drawXMultiLineText(Canvas c, String text, float x, float y,
+                                          Paint paint,
+                                          MPPointF anchor, float angleDegrees) {
+        String firstTextLine = text.split("\n")[0];
+
+        float drawOffsetX = 0.f;
+        float drawOffsetY = 0.f;
+
+        final float lineHeight = paint.getFontMetrics(mFontMetricsBuffer);
+        paint.getTextBounds(firstTextLine, 0, firstTextLine.length(), mDrawTextRectBuffer);
+        drawOffsetX -= mDrawTextRectBuffer.left;
+        drawOffsetY += -mFontMetricsBuffer.ascent;
+        Paint.Align originalTextAlign = paint.getTextAlign();
+        paint.setTextAlign(Paint.Align.LEFT);
+
+        if (angleDegrees != 0.f) {
+            drawOffsetX -= mDrawTextRectBuffer.width() * 0.5f;
+            drawOffsetY -= lineHeight * 0.5f;
+            float translateX = x;
+            float translateY = y;
+            if (anchor.x != 0.5f || anchor.y != 0.5f) {
+                final FSize rotatedSize = getSizeOfRotatedRectangleByDegrees(
+                        mDrawTextRectBuffer.width(),
+                        lineHeight,
+                        angleDegrees);
+                translateX -= rotatedSize.width * (anchor.x - 0.5f);
+                translateY -= rotatedSize.height * (anchor.y - 0.5f);
+                FSize.recycleInstance(rotatedSize);
+            }
+
+            c.save();
+            c.translate(translateX, translateY);
+            c.rotate(angleDegrees);
+            for (String line : text.split("\n")) {
+                c.drawText(line, drawOffsetX, drawOffsetY, paint);
+                drawOffsetY += paint.descent() - paint.ascent();
+            }
+            c.restore();
+        } else {
+            if (anchor.x != 0.f || anchor.y != 0.f) {
+                drawOffsetX -= mDrawTextRectBuffer.width() * anchor.x;
+                drawOffsetY -= lineHeight * anchor.y;
+            }
+            drawOffsetX += x;
+            drawOffsetY += y;
+            for (String line : text.split("\n")) {
+                c.drawText(line, drawOffsetX, drawOffsetY, paint);
+                drawOffsetY += paint.descent() - paint.ascent();
+            }
+        }
+        paint.setTextAlign(originalTextAlign);
+    }
 
     public static void drawXAxisValue(Canvas c, String text, float x, float y,
                                       Paint paint,
