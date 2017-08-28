@@ -483,6 +483,8 @@ public class LegendRenderer extends Renderer {
             LegendEntry entry,
             Legend legend) {
 
+        y = y + Utils.convertDpToPixel(4);
+
         if (entry.formColor == ColorTemplate.COLOR_SKIP ||
                 entry.formColor == ColorTemplate.COLOR_NONE ||
                 entry.formColor == 0)
@@ -555,6 +557,7 @@ public class LegendRenderer extends Renderer {
      * @param label the label to draw
      */
     protected void drawLabel(Canvas c, float x, float y, String label) {
+        y = y + Utils.convertDpToPixel(4);
         c.drawText(label, x, y, mLegendLabelPaint);
     }
 }
